@@ -1,0 +1,35 @@
+[package]
+name = "pek-rwindows"
+version = "0.1.1"
+edition = "2021"
+description = "Pek 启动器：常驻托盘的 Windows 应用搜索（开始菜单搜索失灵时的替代品）"
+authors = ["湖北登灏科技有限公司 <dingchuan@deng-hao.com>"]
+
+[dependencies]
+dhrust = { path = "../DH.RustBase", features = ["toml"] }
+eframe = "0.32"
+fuzzy-matcher = "0.3.7"
+pinyin = "0.11.0"
+serde = { version = "1.0.229", features = ["derive"] }
+serde_json = "1.0.154"
+tray-icon = "0.21"
+windows = { version = "0.62", default-features = false, features = ["Win32_Foundation", "Win32_System_Com", "Win32_System_Threading", "Win32_System_Registry", "Win32_System_LibraryLoader", "Win32_UI_Shell", "Win32_UI_Shell_Common", "Win32_UI_WindowsAndMessaging", "Win32_UI_Input_KeyboardAndMouse", "Win32_UI_HiDpi", "Win32_Graphics_Gdi", "Win32_UI_Shell_PropertiesSystem", "Win32_Security", "Win32_Storage_FileSystem", "Win32_UI_Input_Ime"] }
+
+[dev-dependencies]
+# 配置模板解析测试（与 dhrust 的 toml 特性同版本线）
+toml = "0.8"
+
+[profile.fast]
+inherits = "release"
+lto = false
+codegen-units = 16
+incremental = true
+
+# 发布版：fat LTO + 去符号（体积小、启动快）；只用于打包，日常用 fast
+[profile.release]
+lto = true
+codegen-units = 1
+strip = "symbols"
+
+[build-dependencies]
+winresource = "0.1.34"

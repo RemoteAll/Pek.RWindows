@@ -1,0 +1,44 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "cargo check",
+      "type": "shell",
+      "command": "cargo check",
+      "group": { "kind": "build", "isDefault": true },
+      "problemMatcher": []
+    },
+    {
+      "label": "cargo test",
+      "type": "shell",
+      "command": "cargo test",
+      "group": "test",
+      "problemMatcher": []
+    },
+    {
+      "label": "cargo clippy",
+      "type": "shell",
+      "command": "cargo clippy --all-targets",
+      "problemMatcher": []
+    },
+    {
+      "label": "cargo build (fast)",
+      "type": "shell",
+      "command": "cargo build --profile fast",
+      "problemMatcher": []
+    },
+    {
+      "label": "cargo run",
+      "type": "shell",
+      "command": "cargo run",
+      "problemMatcher": []
+    },
+    {
+      "label": "打包（自动升版本）",
+      "type": "shell",
+      "command": "powershell",
+      "args": ["-ExecutionPolicy", "Bypass", "-File", "scripts\\pack.ps1"],
+      "problemMatcher": []
+    }
+  ]
+}

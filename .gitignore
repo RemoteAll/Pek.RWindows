@@ -1,0 +1,7 @@
+/target
+/Log
+/Data
+/Config/Settings.toml
+/dist
+*.pdb
+*.ilk
