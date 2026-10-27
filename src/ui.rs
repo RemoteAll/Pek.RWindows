@@ -110,13 +110,6 @@ impl LauncherApp {
         install_fonts(&cc.egui_ctx);
         setup_style(&cc.egui_ctx);
 
-        // 关闭本窗口的输入法：启动器只收 ASCII/拼音，否则中文输入法候选框会吞掉回车；
-        // 需要中文时可直接粘贴或用拼音首字母搜。
-        match crate::winutil::disable_ime() {
-            true => dhrust::info!("已关闭搜索框的输入法（IME），用拼音/英文搜索（或粘贴中文）"),
-            false => dhrust::debug!("初始化时关闭输入法未成功（后续每帧会继续尝试）"),
-        }
-
         let (scan_tx, scan_rx) = channel();
         let (launch_tx, launch_rx) = channel();
         let (status_tx, status_rx) = channel::<String>();
@@ -461,10 +454,6 @@ impl eframe::App for LauncherApp {
             return;
         }
 
-        // 搜索框保持 ASCII 输入（IME 关闭）：否则中文输入法会接管回车，首次 Enter 只会选候选字。
-        // egui-winit 会在文本框获焦时自动开启 IME，所以这里每帧压一次关闭命令。
-        ctx.send_viewport_cmd(egui::ViewportCommand::IMEAllowed(false));
-
         if self.settings.auto_hide_on_blur {
             // 用 Win32 前台窗口判断：egui 的 focused 标志在刚显示时可能报假值
             let focused = crate::winutil::own_window_is_foreground();
@@ -638,14 +627,19 @@ fn load_usage() -> HashMap<String, u64> {
 
 // ---------------- 字体与样式 ----------------
 
-/// 加载系统中文字体（egui 内置字体不含 CJK，不装就是方块）。
+/// 加载系统字体（不打包字体文件，exe 更小；egui 内置字体为 0）。
+///
+/// 优先中文字体（中英文都能渲染）；没有中文环境的 Windows 退到 Segoe UI / Arial（英文可见，中文方块）。
 fn install_fonts(ctx: &egui::Context) {
-    const CANDIDATES: [(&str, u32); 5] = [
+    const CANDIDATES: [(&str, u32); 8] = [
         ("C:\\Windows\\Fonts\\msyh.ttc", 0),   // 微软雅黑
         ("C:\\Windows\\Fonts\\msyhbd.ttc", 0), // 微软雅黑 Bold
         ("C:\\Windows\\Fonts\\simhei.ttf", 0), // 黑体
         ("C:\\Windows\\Fonts\\Deng.ttf", 0),   // 等线
         ("C:\\Windows\\Fonts\\simsun.ttc", 0), // 宋体
+        ("C:\\Windows\\Fonts\\segoeui.ttf", 0),// Segoe UI（无中文环境兜底）
+        ("C:\\Windows\\Fonts\\arial.ttf", 0),  // Arial
+        ("C:\\Windows\\Fonts\\tahoma.ttf", 0), // Tahoma
     ];
     for (path, index) in CANDIDATES {
         match std::fs::read(path) {
@@ -655,22 +649,20 @@ fn install_fonts(ctx: &egui::Context) {
                 data.index = index;
                 fonts
                     .font_data
-                    .insert("cjk".to_owned(), Arc::new(data));
+                    .insert("sys".to_owned(), Arc::new(data));
                 for family in [egui::FontFamily::Proportional, egui::FontFamily::Monospace] {
-                    fonts
-                        .families
-                        .entry(family)
-                        .or_default()
-                        .push("cjk".to_owned());
+                    fonts.families.entry(family).or_default().push("sys".to_owned());
                 }
                 ctx.set_fonts(fonts);
-                dhrust::info!("已加载中文字体：{path}");
+                dhrust::info!("已加载系统字体：{path}");
                 return;
             }
             Err(e) => dhrust::debug!("字体 {path} 不可用：{e}"),
         }
     }
-    dhrust::warn!("未找到系统中文字体（微软雅黑/黑体/等线/宋体），中文可能显示为方块");
+    dhrust::error!(
+        "未找到任何系统字体（C:\\Windows\\Fonts 下 msyh/segoeui/arial 都没有），界面文字将无法显示"
+    );
 }
 
 fn setup_style(ctx: &egui::Context) {

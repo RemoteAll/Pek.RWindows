@@ -18,7 +18,6 @@ use windows::Win32::System::Threading::{
     WaitForSingleObject,
 };
 use windows::Win32::UI::HiDpi::{GetDpiForMonitor, MDT_EFFECTIVE_DPI};
-use windows::Win32::UI::Input::Ime::{HIMC, ImmAssociateContext};
 use windows::Win32::UI::Shell::ShellExecuteW;
 use windows::Win32::UI::WindowsAndMessaging::{
     BringWindowToTop, EnumWindows, GetCursorPos, GetForegroundWindow, GetWindowTextW,
@@ -253,18 +252,6 @@ pub fn focus_own_window() -> bool {
         Some(hwnd) => unsafe {
             let _ = BringWindowToTop(hwnd);
             SetForegroundWindow(hwnd).as_bool()
-        },
-        None => false,
-    }
-}
-
-/// 关闭本窗口的输入法（IME）：启动器只收 ASCII/拼音，否则中文输入法的候选框会吞掉回车。
-/// 需要输入中文时可直接粘贴（中文应用名仍能搜到）。
-pub fn disable_ime() -> bool {
-    match own_window_cached() {
-        Some(hwnd) => unsafe {
-            let previous = ImmAssociateContext(hwnd, HIMC::default());
-            !previous.is_invalid()
         },
         None => false,
     }

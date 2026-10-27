@@ -1,19 +1,19 @@
 [package]
 name = "pek-rwindows"
-version = "0.1.1"
+version = "0.1.2"
 edition = "2021"
 description = "Pek 启动器：常驻托盘的 Windows 应用搜索（开始菜单搜索失灵时的替代品）"
 authors = ["湖北登灏科技有限公司 <dingchuan@deng-hao.com>"]
 
 [dependencies]
 dhrust = { path = "../DH.RustBase", features = ["toml"] }
-eframe = "0.32"
+eframe = { version = "0.32", default-features = false, features = ["glow"] }
 fuzzy-matcher = "0.3.7"
 pinyin = "0.11.0"
 serde = { version = "1.0.229", features = ["derive"] }
 serde_json = "1.0.154"
 tray-icon = "0.21"
-windows = { version = "0.62", default-features = false, features = ["Win32_Foundation", "Win32_System_Com", "Win32_System_Threading", "Win32_System_Registry", "Win32_System_LibraryLoader", "Win32_UI_Shell", "Win32_UI_Shell_Common", "Win32_UI_WindowsAndMessaging", "Win32_UI_Input_KeyboardAndMouse", "Win32_UI_HiDpi", "Win32_Graphics_Gdi", "Win32_UI_Shell_PropertiesSystem", "Win32_Security", "Win32_Storage_FileSystem", "Win32_UI_Input_Ime"] }
+windows = { version = "0.62", default-features = false, features = ["Win32_Foundation", "Win32_System_Com", "Win32_System_Threading", "Win32_System_Registry", "Win32_System_LibraryLoader", "Win32_UI_Shell", "Win32_UI_Shell_Common", "Win32_UI_WindowsAndMessaging", "Win32_UI_Input_KeyboardAndMouse", "Win32_UI_HiDpi", "Win32_Graphics_Gdi", "Win32_UI_Shell_PropertiesSystem", "Win32_Security", "Win32_Storage_FileSystem"] }
 
 [dev-dependencies]
 # 配置模板解析测试（与 dhrust 的 toml 特性同版本线）
@@ -25,11 +25,13 @@ lto = false
 codegen-units = 16
 incremental = true
 
-# 发布版：fat LTO + 去符号（体积小、启动快）；只用于打包，日常用 fast
+# 发布版：体积优先（opt-level=z + fat LTO + 去符号 + abort）
 [profile.release]
+opt-level = "z"
 lto = true
 codegen-units = 1
 strip = "symbols"
+panic = "abort"
 
 [build-dependencies]
 winresource = "0.1.34"
